@@ -7,7 +7,7 @@ const RegistratedError = require('../errors/registrated-err');
 const NotAuthorizedError = require('../errors/not-authorized-err');
 
 const getUser = (req, res, next) => {
-  User.findById(req.params.userId)
+  User.findById({ _id: req.user._id })
     .orFail(new NotFoundError('Пользователь с указанным id не найден'))
     .then((user) => res.send(user))
     .catch((err) => {
