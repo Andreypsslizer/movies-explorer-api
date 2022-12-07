@@ -5,6 +5,7 @@ const allowedCors = [
 
 const DEFAULT_ALLOWED_METHODS = 'GET,HEAD,PUT,PATCH,POST,DELETE';
 
+// eslint-disable-next-line consistent-return
 const corsRequest = (req, res, next) => {
   const { method } = req;
   const { origin } = req.headers;

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const NotAuthorizedError = require('../errors/not-authorized-err');
 
+// eslint-disable-next-line consistent-return
 module.exports = (req, res, next) => {
   let payload;
   try {

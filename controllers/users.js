@@ -21,11 +21,11 @@ const getUser = (req, res, next) => {
 
 const updateUser = (req, res, next) => {
   const userId = req.user._id;
-  const { name, about } = req.body;
+  const { name, email } = req.body;
 
   User.findByIdAndUpdate(
     userId,
-    { name, about },
+    { name, email },
     {
       new: true,
       runValidators: true,
@@ -33,7 +33,9 @@ const updateUser = (req, res, next) => {
   )
     .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
+      if (err.code === 11000) {
+        next(new RegistratedError('Пользователь с таким email уже существует'));
+      } else if (err.name === 'CastError' || err.name === 'ValidationError') {
         next(new BadRequestError('Введены некорректные данные'));
       } else {
         next(err);
@@ -44,18 +46,16 @@ const updateUser = (req, res, next) => {
 const createUser = async (req, res, next) => {
   try {
     const {
-      name, about, avatar, email, password,
+      name, email, password,
     } = req.body;
     const hash = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
-      about,
-      avatar,
       email,
       password: hash,
     });
     res.json({
-      name: user.name, about: user.about, avatar: user.avatar, email: user.email,
+      name: user.name, email: user.email,
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -71,10 +71,13 @@ const createUser = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    const { NODE_ENV, JWT_SECRET } = process.env;
     const user = await User.findUserByCredentials(email, password);
-    const token = jwt.sign({ _id: user._id }, 'some-secret-key', {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign(
+      { _id: user._id },
+      NODE_ENV === 'production' ? JWT_SECRET : 'some-secret-key',
+      { expiresIn: '7d' },
+    );
     res.json({
       token,
     });
